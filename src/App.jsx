@@ -226,10 +226,198 @@ export default function App() {
     );
   }
 
-  // PLACEHOLDER FOR NEXT PART - Do not remove this bracket yet
+  // ==========================================
+  // 4. HELPER CALCULATIONS & CRUD LOGIC
+  // ==========================================
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const balance = totalIncome - totalExpense;
+  
+  const pieData = [
+    { name: 'Income', value: totalIncome, color: '#10b981' },
+    { name: 'Expenses', value: totalExpense, color: '#ef4444' }
+  ];
+
+  // New Transaction State
+  const [newTx, setNewTx] = useState({ title: '', amount: '', type: 'expense', category: 'Food' });
+
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.post(`${API_URL}/transactions`, newTx, config);
+      setNewTx({ title: '', amount: '', type: 'expense', category: 'Food' });
+      fetchData(token);
+    } catch (error) {
+      console.error("Error adding transaction");
+    }
+  };
+
+  const handleDeleteTransaction = async (id) => {
+    try {
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.delete(`${API_URL}/transactions/${id}`, config);
+      fetchData(token);
+    } catch (error) {
+      console.error("Error deleting transaction");
+    }
+  };
+
+  // ==========================================
+  // 5. MAIN DASHBOARD UI
+  // ==========================================
   return (
-    <div className="text-white p-10">
-      Dashboard is loading... We will paste the UI here in Part 2.
+    <div className="min-h-screen bg-lightbg dark:bg-darkbg text-slate-900 dark:text-white flex transition-colors duration-300">
+      
+      {/* SIDEBAR */}
+      <aside className="w-64 glass-panel border-r border-slate-200 dark:border-slate-800 hidden md:flex flex-col z-20">
+        <div className="p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand to-purple-600">FinTrack</h2>
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+            {darkMode ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+        </div>
+        
+        <nav className="flex-1 px-4 space-y-2 mt-4">
+          {[
+            { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+            { id: 'transactions', icon: Receipt, label: 'Transactions' },
+            { id: 'budgets', icon: PieChartIcon, label: 'Budgets' },
+            { id: 'goals', icon: Target, label: 'Savings Goals' }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                activeTab === item.id 
+                ? 'bg-brand text-white shadow-lg shadow-brand/30' 
+                : 'hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="font-medium">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-3 mb-4 px-2">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand to-purple-500 flex items-center justify-center text-white font-bold shadow-md">
+              {user?.name?.charAt(0) || 'U'}
+            </div>
+            <div className="overflow-hidden">
+              <p className="font-semibold text-sm truncate">{user?.name || 'User'}</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors">
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        {/* Background decorative blob */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand/10 rounded-full mix-blend-multiply filter blur-3xl opacity-50 -z-10 pointer-events-none"></div>
+
+        {/* TAB 1: DASHBOARD */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-8 animate-fade-in">
+            <header className="flex justify-between items-center mb-2">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Welcome back, {user?.name?.split(' ')[0]}!</p>
+              </div>
+            </header>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* CRED style Balance Card */}
+              <div className="credit-card rounded-2xl p-6 text-white relative overflow-hidden transition-transform hover:-translate-y-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-black opacity-10 rounded-full -ml-10 -mb-10"></div>
+                <p className="text-indigo-100 mb-1 font-medium">Total Balance</p>
+                <h2 className="text-4xl font-extrabold mb-6">${balance.toFixed(2)}</h2>
+                <div className="flex justify-between text-sm opacity-90 font-mono">
+                  <span>**** **** **** 4289</span>
+                  <span>12/28</span>
+                </div>
+              </div>
+              
+              <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="p-3 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Income</p>
+                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white">${totalIncome.toFixed(2)}</h3>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="p-3 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl">
+                    <TrendingDown className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Total Expense</p>
+                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white">${totalExpense.toFixed(2)}</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Charts Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 glass-panel p-6 rounded-2xl">
+                <h3 className="text-lg font-bold mb-6">Income vs Expenses Overview</h3>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[{ name: 'Current Month', Income: totalIncome, Expense: totalExpense }]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} vertical={false} />
+                      <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} />
+                      <YAxis stroke="#64748b" axisLine={false} tickLine={false} />
+                      <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{backgroundColor: darkMode ? '#1e293b' : '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                      <Legend iconType="circle" />
+                      <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                      <Bar dataKey="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+              
+              <div className="glass-panel p-6 rounded-2xl">
+                <h3 className="text-lg font-bold mb-6">Expense Breakdown</h3>
+                <div className="h-72 flex justify-center items-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={pieData} innerRadius={70} outerRadius={90} paddingAngle={5} dataKey="value" stroke="none">
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip contentStyle={{backgroundColor: darkMode ? '#1e293b' : '#fff', borderRadius: '12px', border: 'none'}} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION PLACEHOLDER FOR PART 3 */}
+        {activeTab !== 'dashboard' && (
+          <div className="glass-panel p-8 rounded-2xl animate-fade-in">
+            <h2 className="text-2xl font-bold mb-4 capitalize">{activeTab} Manager</h2>
+            <p className="text-slate-500">I will provide the Add Transaction & Budget logic code in the final step to replace this!</p>
+          </div>
+        )}
+
+      </main>
     </div>
   );
 }
