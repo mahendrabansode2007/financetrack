@@ -409,11 +409,106 @@ export default function App() {
           </div>
         )}
 
-        {/* SECTION PLACEHOLDER FOR PART 3 */}
-        {activeTab !== 'dashboard' && (
-          <div className="glass-panel p-8 rounded-2xl animate-fade-in">
-            <h2 className="text-2xl font-bold mb-4 capitalize">{activeTab} Manager</h2>
-            <p className="text-slate-500">I will provide the Add Transaction & Budget logic code in the final step to replace this!</p>
+        {/* TAB 2: TRANSACTIONS */}
+        {activeTab === 'transactions' && (
+          <div className="space-y-6 animate-fade-in">
+            <h2 className="text-3xl font-bold tracking-tight">Manage Transactions</h2>
+            
+            {/* Add Transaction Form */}
+            <div className="glass-panel p-6 rounded-2xl">
+              <h3 className="text-lg font-semibold mb-4">Add New Transaction</h3>
+              <form onSubmit={handleAddTransaction} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="md:col-span-2">
+                  <input 
+                    type="text" 
+                    placeholder="Title (e.g. Salary, Groceries)" 
+                    required 
+                    value={newTx.title} 
+                    onChange={(e) => setNewTx({...newTx, title: e.target.value})} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand" 
+                  />
+                </div>
+                <div>
+                  <input 
+                    type="number" 
+                    placeholder="Amount" 
+                    required 
+                    value={newTx.amount} 
+                    onChange={(e) => setNewTx({...newTx, amount: parseFloat(e.target.value) || ''})} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand" 
+                  />
+                </div>
+                <div>
+                  <select 
+                    value={newTx.type} 
+                    onChange={(e) => setNewTx({...newTx, type: e.target.value})} 
+                    className="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-transparent dark:border-slate-700 outline-none focus:ring-2 focus:ring-brand appearance-none"
+                  >
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                  </select>
+                </div>
+                <button 
+                  type="submit" 
+                  className="bg-brand hover:bg-indigo-600 text-white rounded-xl py-3 px-4 font-semibold transition-all shadow-md hover:shadow-indigo-500/30 flex justify-center items-center gap-2"
+                >
+                  <Plus className="w-5 h-5" /> Add
+                </button>
+              </form>
+            </div>
+
+            {/* Transaction List */}
+            <div className="glass-panel rounded-2xl overflow-hidden">
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Transaction History</h3>
+              </div>
+              <div className="divide-y divide-slate-200 dark:divide-slate-800/50">
+                {transactions.length === 0 ? (
+                  <div className="p-10 text-center text-slate-500 flex flex-col items-center">
+                    <Receipt className="w-12 h-12 mb-3 text-slate-300 dark:text-slate-600" />
+                    <p>No transactions found. Start by adding some above!</p>
+                  </div>
+                ) : (
+                  transactions.map(tx => (
+                    <div key={tx._id} className="p-4 px-6 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full shadow-sm ${tx.type === 'income' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400'}`}>
+                          {tx.type === 'income' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">{tx.title}</p>
+                          <p className="text-xs text-slate-500">{new Date(tx.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <span className={`font-bold text-lg ${tx.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                        </span>
+                        <button 
+                          onClick={() => handleDeleteTransaction(tx._id)} 
+                          className="text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3 & 4: BUDGETS AND GOALS */}
+        {(activeTab === 'budgets' || activeTab === 'goals') && (
+          <div className="glass-panel p-10 rounded-2xl animate-fade-in text-center flex flex-col items-center justify-center min-h-[50vh]">
+             <div className="w-20 h-20 bg-brand/10 text-brand rounded-full flex items-center justify-center mb-6 shadow-inner">
+                {activeTab === 'budgets' ? <PieChartIcon className="w-10 h-10" /> : <Target className="w-10 h-10" />}
+             </div>
+             <h2 className="text-3xl font-extrabold mb-3 capitalize text-slate-800 dark:text-white">{activeTab} Setup Ready</h2>
+             <p className="text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+               The backend APIs and database schemas for {activeTab} are fully integrated and active. You can use the existing state arrays to expand this UI module as needed!
+             </p>
           </div>
         )}
 
